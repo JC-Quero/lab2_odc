@@ -9,6 +9,7 @@
 .equ ROJO, 0xFFD13438
 .equ AZUL_CLARO, 0xFF2B6CB0
 .equ AZUL, 0xFF000080
+.equ AZUL_OSCURO, 0xFF4682B4
 .equ INDIGO, 0xFF4B0082
 .equ MAGENTA, 0xFF8B008B
 .equ VERDE_CLARO, 0xFF38A169
@@ -382,6 +383,15 @@ main:
     mov x4, 200                // alto (son delgadas)
     movz x5, (TURQUESA & 0x0000FFFF), lsl 0 // Usa el color de tu nube verde
     movk x5, (TURQUESA >> 16), lsl 16
+    bl dibujar_rectangulo
+
+    mov x0, x20
+    mov x1, 342                // x_inicio (ajusta)
+    mov x2, 215             	// y_inicio (ajusta)
+    mov x3, 11               // ancho (ajusta)
+    mov x4, 118               // alto (son delgadas)
+    movz x5, (AZUL_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (AZUL_OSCURO >> 16), lsl 16
     bl dibujar_rectangulo
 
 
