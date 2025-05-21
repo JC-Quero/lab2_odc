@@ -1,0 +1,167 @@
+.equ SCREEN_WIDTH,    640
+.equ SCREEN_HEIGH,    480
+.equ BITS_PER_PIXEL,  32
+
+// Colores en formato AARRGGBB
+.equ COLOR_FONDO,     0xFF0000FF // Azul
+.equ COLOR_CIRCULO,   0xFFFF0000 // Rojo
+
+dibujar_pixel:
+    mov x10, SCREEN_WIDTH    // Cargar SCREEN_WIDTH en un registro
+    mul x4, x2, x10         // x4 = pixel_y * SCREEN_WIDTH
+    add x4, x4, x1          // x4 = (pixel_y * SCREEN_WIDTH) + pixel_x
+    lsl x4, x4, 2           // x4 = offset en bytes (multiplicar por 4)
+    add x5, x0, x4          // x5 = dirección del píxel en el framebuffer
+    str w3, [x5]            // Guarda el color (w3) en esa dirección de memoria (x5)
+    ret
+
+dibujar_circulo:
+    stp x19, x20, [sp, -16]!
+    stp x21, x22, [sp, -16]!
+    stp x23, x24, [sp, -16]!
+    stp x25, x30, [sp, -16]!
+
+    mov x19, x0     // framebuffer_base
+    mov x20, x1     // cx (centro x)
+    mov x21, x2     // cy (centro y)
+    mov x22, x3     // radio
+    mov x23, x4     // color
+
+    // Bucle para cada y en el rango [cy - radio, cy + radio]
+    sub x24, x21, x22   // y_start = cy - radio
+    mov x25, x24        // y_actual
+loop_circle_y:
+        add x26, x21, x22   // y_end = cy + radio
+        cmp x25, x26
+        bgt end_circle_y
+
+        // Bucle para cada x en el rango [cx - radio, cx + radio]
+        sub x29, x20, x22   // x_start = cx - radio
+        mov x28, x29        // x_actual
+    loop_circle_x:
+            add x29, x20, x22   // x_end = cx + radio
+            cmp x28, x29
+            bgt end_circle_x
+
+            // Calcular (x-cx)^2 + (y-cy)^2 <= radio^2
+            sub x6, x28, x20   // dx = x_actual - cx
+            mul x6, x6, x6     // dx^2
+            sub x7, x25, x21   // dy = y_actual - cy
+            mul x7, x7, x7     // dy^2
+            add x6, x6, x7     // distancia_cuadrada = dx^2 + dy^2
+            mul x7, x22, x22   // radio^2
+            cmp x6, x7
+            ble draw_circle_pixel
+
+            b skip_draw_circle_pixel
+
+    draw_circle_pixel:
+            mov x0, x19     // framebuffer_base
+            mov x1, x28     // x_actual
+            mov x2, x25     // y_actual
+            mov x3, x23     // color
+            bl dibujar_pixel
+
+    skip_draw_circle_pixel:
+            add x28, x28, 1
+            b loop_circle_x
+        end_circle_x:
+        add x25, x25, 1
+        b loop_circle_y
+
+    end_circle_y:
+    ldp x25, x30, [sp], 16
+    ldp x23, x24, [sp], 16
+    ldp x21, x22, [sp], 16
+    ldp x19, x20, [sp], 16
+    ret
+
+
+// Procedimiento para dibujar un rectángulo relleno
+// x0 = framebuffer_base
+// x1 = x_inicio
+// x2 = y_inicio
+// x3 = ancho
+// x4 = alto
+// x5 = color
+dibujar_rectangulo:
+    // Guardar registros que la rutina va a modificar y que deben ser restaurados al salir (callee-saved)
+    // Se guardan x19-x25 y x30 (lr) porque son utilizados por esta rutina y deben preservarse para el llamador (main).
+    stp x19, x20, [sp, -16]!
+    stp x21, x22, [sp, -16]!
+    stp x23, x24, [sp, -16]!
+    stp x25, x30, [sp, -16]! // Guarda también lr (x30)
+
+    mov x19, x0                 // x19 = framebuffer_base (base)
+    mov x20, x1                 // x20 = x_inicio
+    mov x21, x2                 // x21 = y_inicio
+    mov x22, x3                 // x22 = ancho
+    mov x23, x4                 // x23 = alto
+    mov x24, x5                 // x24 = color (este color es de 32 bits, se espera que x5 ya lo tenga cargado correctamente por el llamador)
+
+    // Loop principal para las filas (Y)
+    mov x25, x21                // x25 = y_actual (comienza en y_inicio)
+loop_rect_y:
+    // Condición de salida del bucle Y: y_actual >= y_inicio + alto
+    add x26, x21, x23           // x26 = y_inicio + alto (calcula el límite superior de Y)
+    cmp x25, x26
+    bge end_rect_y              // Si y_actual es mayor o igual que el límite, salir
+
+    // Loop para las columnas (X) en la fila actual
+    mov x27, x20                // x27 = x_actual (comienza en x_inicio para cada fila)
+loop_rect_x:
+    // Condición de salida del bucle X: x_actual >= x_inicio + ancho
+    add x28, x20, x22           // x28 = x_inicio + ancho (calcula el límite derecho de X)
+    cmp x27, x28
+    bge end_rect_x              // Si x_actual es mayor o igual que el límite, salir
+
+    // Llamar a dibujar_pixel para el píxel actual (x_actual, y_actual)
+    mov x0, x19                 // Arg: framebuffer_base
+    mov x1, x27                 // Arg: pixel_x (x_actual)
+    mov x2, x25                 // Arg: pixel_y (y_actual)
+    mov x3, x24                 // Arg: pixel_color (el color ya está en x24, que es callee-saved)
+    bl dibujar_pixel            // Llama al procedimiento de dibujar píxel
+
+    add x27, x27, 1             // x_actual++ (siguiente columna)
+    b loop_rect_x               // Repetir para la siguiente columna
+
+end_rect_x:
+    add x25, x25, 1             // y_actual++ (siguiente fila)
+    b loop_rect_y               // Repetir para la siguiente fila
+
+end_rect_y:
+    // Restaurar registros en el orden inverso al que se guardaron
+    ldp x25, x30, [sp], 16
+    ldp x23, x24, [sp], 16
+    ldp x21, x22, [sp], 16
+    ldp x19, x20, [sp], 16
+    ret                         // Regresar al llamador
+
+
+.globl main
+
+main:
+    mov x20, x0  // Guarda la dirección base del framebuffer
+
+    // 1. Dibujar el fondo azul
+    mov x0, x20
+    mov x1, 0
+    mov x2, 0
+    mov x3, SCREEN_WIDTH
+    mov x4, SCREEN_HEIGH
+    movz x5, (COLOR_FONDO & 0x0000FFFF), lsl 0
+    movk x5, (COLOR_FONDO >> 16), lsl 16
+    bl dibujar_rectangulo // Llama a dibujar_rectangulo (si la tienes) o dibuja píxeles directamente
+
+    // 2. Dibujar un círculo rojo en el centro
+    mov x0, x20         // framebuffer_base
+    mov x1, SCREEN_WIDTH / 2  // cx (centro x)
+    mov x2, SCREEN_HEIGH / 2 // cy (centro y)
+    mov x3, 100         // radio
+    movz x4, (COLOR_CIRCULO & 0x0000FFFF), lsl 0
+    movk x4, (COLOR_CIRCULO >> 16), lsl 16
+    bl dibujar_circulo
+
+InfLoop:
+b InfLoop
+

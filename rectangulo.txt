@@ -1,0 +1,152 @@
+// --- Constantes y definiciones ---
+.equ SCREEN_WIDTH,    640
+.equ SCREEN_HEIGH,    480
+.equ BITS_PER_PIXEL,  32
+
+// Colores en formato AARRGGBB (Alpha, Rojo, Verde, Azul)
+// Para AArch64, los valores de color se pasan en x0-x7.
+// Las constantes de 32 bits requieren movz/movk
+.equ COLOR_FONDO,     0xFF1A1A2E // Azul oscuro/púrpura
+.equ COLOR_FIGURA1,   0xFFF7DC6F // Amarillo claro
+.equ COLOR_FIGURA2,   0xFFEB6864 // Rojo salmón
+.equ COLOR_TEXTO,     0xFFFFFFFF // Blanco
+.equ COLOR_BORDE,     0xFF000000 // Negro
+
+// --- Sección de texto (código ejecutable) ---
+.text
+.globl main // Asegura que main sea visible para el enlazador (si no viene de start.o)
+
+// -----------------------------------------------------------------------------
+// Rutinas de Dibujo (ordenadas de más básica a más compleja)
+// -----------------------------------------------------------------------------
+
+// Procedimiento para dibujar un píxel en (x, y) con un color dado
+// x0 = framebuffer_base
+// x1 = pixel_x
+// x2 = pixel_y
+// x3 = pixel_color (AARRGGBB)
+dibujar_pixel:
+    // NO ES NECESARIO guardar registros en dibujar_pixel para este uso,
+    // ya que x4 y x5 son registros temporales (caller-saved) y x0-x3 son argumentos.
+
+    // Cargar SCREEN_WIDTH en un registro temporal para la multiplicación
+    // Usamos x10 como temporal para SCREEN_WIDTH
+    mov x10, SCREEN_WIDTH       // <--- CAMBIO AQUÍ: Cargar constante en registro
+
+    // Calcular el offset en el framebuffer: (pixel_y * SCREEN_WIDTH + pixel_x) * 4
+    mul x4, x2, x10             // x4 = pixel_y * SCREEN_WIDTH  <--- CAMBIO AQUÍ: Usar x10
+    add x4, x4, x1              // x4 = (pixel_y * SCREEN_WIDTH) + pixel_x
+    lsl x4, x4, 2               // x4 = offset en bytes (multiplicar por 4, ya que cada píxel son 4 bytes)
+
+    // Sumar el offset a la dirección base del framebuffer para obtener la dirección final del píxel
+    add x5, x0, x4              // x5 = dirección del píxel en el framebuffer
+
+    // Almacenar el color en la dirección del píxel
+    str w3, [x5]                // w3 es la parte de 32 bits de x3 (el color)
+
+    ret                         // Regresar al llamador
+
+// -----------------------------------------------------------------------------
+
+// Procedimiento para dibujar un rectángulo relleno
+// x0 = framebuffer_base
+// x1 = x_inicio
+// x2 = y_inicio
+// x3 = ancho
+// x4 = alto
+// x5 = color
+dibujar_rectangulo:
+    // Guardar registros que la rutina va a modificar y que deben ser restaurados al salir (callee-saved)
+    // Se guardan x19-x25 y x30 (lr) porque son utilizados por esta rutina y deben preservarse para el llamador (main).
+    stp x19, x20, [sp, -16]!
+    stp x21, x22, [sp, -16]!
+    stp x23, x24, [sp, -16]!
+    stp x25, x30, [sp, -16]! // Guarda también lr (x30)
+
+    mov x19, x0                 // x19 = framebuffer_base (base)
+    mov x20, x1                 // x20 = x_inicio
+    mov x21, x2                 // x21 = y_inicio
+    mov x22, x3                 // x22 = ancho
+    mov x23, x4                 // x23 = alto
+    mov x24, x5                 // x24 = color (este color es de 32 bits, se espera que x5 ya lo tenga cargado correctamente por el llamador)
+
+    // Loop principal para las filas (Y)
+    mov x25, x21                // x25 = y_actual (comienza en y_inicio)
+loop_rect_y:
+    // Condición de salida del bucle Y: y_actual >= y_inicio + alto
+    add x26, x21, x23           // x26 = y_inicio + alto (calcula el límite superior de Y)
+    cmp x25, x26
+    bge end_rect_y              // Si y_actual es mayor o igual que el límite, salir
+
+    // Loop para las columnas (X) en la fila actual
+    mov x27, x20                // x27 = x_actual (comienza en x_inicio para cada fila)
+loop_rect_x:
+    // Condición de salida del bucle X: x_actual >= x_inicio + ancho
+    add x28, x20, x22           // x28 = x_inicio + ancho (calcula el límite derecho de X)
+    cmp x27, x28
+    bge end_rect_x              // Si x_actual es mayor o igual que el límite, salir
+
+    // Llamar a dibujar_pixel para el píxel actual (x_actual, y_actual)
+    mov x0, x19                 // Arg: framebuffer_base
+    mov x1, x27                 // Arg: pixel_x (x_actual)
+    mov x2, x25                 // Arg: pixel_y (y_actual)
+    mov x3, x24                 // Arg: pixel_color (el color ya está en x24, que es callee-saved)
+    bl dibujar_pixel            // Llama al procedimiento de dibujar píxel
+
+    add x27, x27, 1             // x_actual++ (siguiente columna)
+    b loop_rect_x               // Repetir para la siguiente columna
+
+end_rect_x:
+    add x25, x25, 1             // y_actual++ (siguiente fila)
+    b loop_rect_y               // Repetir para la siguiente fila
+
+end_rect_y:
+    // Restaurar registros en el orden inverso al que se guardaron
+    ldp x25, x30, [sp], 16
+    ldp x23, x24, [sp], 16
+    ldp x21, x22, [sp], 16
+    ldp x19, x20, [sp], 16
+    ret                         // Regresar al llamador
+
+// -----------------------------------------------------------------------------
+// Programa principal
+// -----------------------------------------------------------------------------
+
+main:
+    // x0 contiene la direccion base del framebuffer
+    mov x20, x0 // Guarda la dirección base del framebuffer en x20 (x20 es un callee-saved, lo preservamos)
+
+    // ---------------- Código de Main ------------------------------------
+
+    // 1. Dibujar el fondo completo de la pantalla (azul oscuro)
+    mov x0, x20                 // Argumento 1: Dirección base del framebuffer
+    mov x1, 0                   // Argumento 2: x_inicio = 0
+    mov x2, 0                   // Argumento 3: y_inicio = 0
+    mov x3, SCREEN_WIDTH        // Argumento 4: ancho = SCREEN_WIDTH
+    mov x4, SCREEN_HEIGH        // Argumento 5: alto = SCREEN_HEIGH
+    // Para el color COLOR_FONDO (0xFF1A1A2E), es un valor de 32 bits, necesitamos movz/movk
+    movz x5, (COLOR_FONDO & 0x0000FFFF), lsl 0  // Carga los 16 bits menos significativos
+    movk x5, (COLOR_FONDO >> 16), lsl 16       // Carga los 16 bits más significativos
+    bl dibujar_rectangulo       // Llama a la rutina para dibujar el fondo
+
+    // 2. Dibujar un rectángulo negro en el centro (aprox.)
+    // Este se dibujará *encima* del fondo azul.
+    mov x0, x20                 // Argumento 1: Dirección base del framebuffer
+    mov x1, 200                 // Argumento 2: x_inicio = 200
+    mov x2, 150                 // Argumento 3: y_inicio = 150
+    mov x3, 200                 // Argumento 4: ancho = 200
+    mov x4, 100                 // Argumento 5: alto = 100
+    // Para el color COLOR_BORDE (0xFF000000), también es de 32 bits.
+    movz x5, (COLOR_BORDE & 0x0000FFFF), lsl 0
+    movk x5, (COLOR_BORDE >> 16), lsl 16
+    bl dibujar_rectangulo       // Llama a la rutina para dibujar el rectángulo negro
+
+    // Puedes seguir añadiendo más llamadas a dibujar_rectangulo o otras rutinas aquí
+    // para construir tu imagen compleja.
+
+    // ------------------------------------------------------------------
+
+    // Bucle infinito para mantener la pantalla visible
+InfLoop:
+    b InfLoop
+
