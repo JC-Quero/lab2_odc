@@ -590,7 +590,7 @@ main:
 
     //C
     mov x0, x20
-    mov x1, 575                // x_inicio (ajusta)
+    mov x1, 572                // x_inicio (ajusta)
     mov x2, 330            	    // y_inicio (ajusta)
     mov x3, 5               // ancho (ajusta)
     mov x4, 40               // alto (son delgadas)
@@ -598,5 +598,23 @@ main:
     movk x5, (DETALLES_AMARILLOS >> 16), lsl 16
     bl dibujar_rectangulo
 
+
+    mov x0, x20
+    mov x1, 578                // x_inicio (ajusta)
+    mov x2, 325            	    // y_inicio (ajusta)
+    mov x3, 15               // ancho (ajusta)
+    mov x4, 4               // alto (son delgadas)
+    movz x5, (DETALLES_AMARILLOS & 0x0000FFFF), lsl 0 
+    movk x5, (DETALLES_AMARILLOS >> 16), lsl 16
+    bl dibujar_rectangulo
+
+    mov x0, x20
+    mov x1, 578                // x_inicio (ajusta)
+    mov x2, 370            	    // y_inicio (ajusta)
+    mov x3, 15               // ancho (ajusta)
+    mov x4, 4               // alto (son delgadas)
+    movz x5, (DETALLES_AMARILLOS & 0x0000FFFF), lsl 0 
+    movk x5, (DETALLES_AMARILLOS >> 16), lsl 16
+    bl dibujar_rectangulo
 InfLoop:
 	b InfLoop
