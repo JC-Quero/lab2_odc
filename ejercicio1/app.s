@@ -155,7 +155,7 @@ dibujar_circulo:
     mov x22, x3     // x22 = radio
     mov x23, x4     // x23 = color
 
-    // --- 3. Calcular radio al cuadrado (提前计算) ---
+    // --- 3. Calcular radio al cuadrado  ---
     // Esto lo calculamos una sola vez aquí, en lugar de hacerlo en cada píxel del bucle.
     // Esto es una optimización importante para que sea más rápido.
     mul x24, x22, x22 // x24 = radio * radio (radio^2)
@@ -244,8 +244,8 @@ main:
 	mov x3, SCREEN_WIDTH
 	mov x4, SCREEN_HEIGH
 
-	movz x5, (FONDO & 0x0000FFFF), lsl 0
-	movk x5, (FONDO >> 16), lsl 16
+	movz x5, (FONDO & 0x0000FFFF), lsl 0 //cargamos los primeros 16 bits y los demas en 0s
+	movk x5, (FONDO >> 16), lsl 16 // actualizamos con los otros 16 bits (nos queda el color de 32 bits)
 	bl dibujar_rectangulo
 
 
@@ -353,13 +353,8 @@ main:
     bl dibujar_rectangulo
 
 
-
-
-
     //NUBES
 
-	// B. DIBUJAR LAS "NUBES" RECTANGULARES (Ejemplos, tendrás que añadir más)
-    // Nube 1 (en la parte superior)
     mov x0, x20
     mov x1, 200                 
     mov x2, 50                  
@@ -396,7 +391,6 @@ main:
     movk x5, (TURQUESA >> 16), lsl 16
     bl dibujar_rectangulo
 
-
 	mov x0, x20
     mov x1, 500                
     mov x2, 209             	
@@ -405,8 +399,6 @@ main:
     movz x5, (TURQUESA & 0x0000FFFF), lsl 0 
     movk x5, (TURQUESA >> 16), lsl 16
     bl dibujar_rectangulo
-
-
 
     mov x0, x20
     mov x1, 500                
@@ -417,7 +409,6 @@ main:
     movk x5, (TURQUESA >> 16), lsl 16
     bl dibujar_rectangulo
 
-
     mov x0, x20
     mov x1, 530                
     mov x2, 50             	
@@ -426,7 +417,6 @@ main:
     movz x5, (TURQUESA & 0x0000FFFF), lsl 0 
     movk x5, (TURQUESA >> 16), lsl 16
     bl dibujar_rectangulo
-
 
     mov x0, x20
     mov x1, 540                
@@ -524,7 +514,6 @@ main:
     movk x5, (VERDE_CLARO >> 16), lsl 16
     bl dibujar_rectangulo
 
-    //----
     mov x0, x20
     mov x1, 408                
     mov x2, 250             	
@@ -543,8 +532,6 @@ main:
     movk x5, (VERDE_OCEANO >> 16), lsl 16
     bl dibujar_rectangulo
 
-
-    //SOMBRA Edificio chico morado de la derecha
     mov x0, x20
     mov x1, 360                
     mov x2, 350             	
@@ -554,7 +541,6 @@ main:
     movk x5, (0x00 >> 16), lsl 16
     bl dibujar_rectangulo
 
-    //SOMBRA Edificio chico morado de la derecha
     mov x0, x20
     mov x1, 370                
     mov x2, 358             	
@@ -564,7 +550,6 @@ main:
     movk x5, (INDIGO >> 16), lsl 16
     bl dibujar_rectangulo
 
-    //Sombra edificio chico largo de la izquiera
     mov x0, x20
     mov x1, 280                
     mov x2, 270            	
@@ -574,7 +559,6 @@ main:
     movk x5, (0x00 >> 16), lsl 16
     bl dibujar_rectangulo
 
-    //Sombra edificio chico largo de la izquiera
     mov x0, x20
     mov x1, 284                
     mov x2, 274            	
@@ -584,9 +568,6 @@ main:
     movk x5, (AZUL >> 16), lsl 16
     bl dibujar_rectangulo
 
-
-
-    //Edificio Naranja Izquierda (SOMBRA)
     mov x0, x20
     mov x1, 170                
     mov x2, 274            	
@@ -595,7 +576,6 @@ main:
     movz x5, (0x00 & 0x0000FFFF), lsl 0 
     movk x5, (0x00 >> 16), lsl 16
     bl dibujar_rectangulo
-
 
     mov x0, x20
     mov x1, 175                
@@ -606,8 +586,6 @@ main:
     movk x5, (ROJO >> 16), lsl 16
     bl dibujar_rectangulo
 
-
-    //Sombra edifico amarillo
     mov x0, x20
     mov x1, 120                
     mov x2, 308            	
@@ -645,7 +623,6 @@ main:
     movk x5, (MAGENTA >> 16), lsl 16
     bl dibujar_rectangulo
 
-
     mov x0, x20
     mov x1, 100             
     mov x2, 290            	
@@ -656,17 +633,10 @@ main:
     bl dibujar_rectangulo
 
 
-
-
-
-
-
-
-
-//--------------------------------
+    
 // LETRAS ODC 2025
 
-//O
+    //O
     mov x0, x20
     mov x1, 503                
     mov x2, 325            	    
@@ -703,7 +673,6 @@ main:
     movk x5, (DETALLES_AMARILLOS >> 16), lsl 16
     bl dibujar_rectangulo
 
-
     //D
 
     mov x0, x20
@@ -714,7 +683,6 @@ main:
     movz x5, (DETALLES_AMARILLOS & 0x0000FFFF), lsl 0 
     movk x5, (DETALLES_AMARILLOS >> 16), lsl 16
     bl dibujar_rectangulo
-
 
     mov x0, x20
     mov x1, 535                
@@ -752,7 +720,6 @@ main:
     movz x5, (DETALLES_AMARILLOS & 0x0000FFFF), lsl 0 
     movk x5, (DETALLES_AMARILLOS >> 16), lsl 16
     bl dibujar_rectangulo
-
 
     mov x0, x20
     mov x1, 578                
@@ -826,11 +793,10 @@ main:
     // 0
 
     mov x0, x20
-	mov x1, 538 //Eje x
-	mov x2, 404 //Eje y
-	mov x3, 15 //Tamano
+	mov x1, 538 
+	mov x2, 404 
+	mov x3, 15 
 
-	//Cargamos el color
 	movz x4, (ROSA & 0x0000FFFF), lsl 0
 	movk x4, (ROSA >> 16), lsl 16
 	bl dibujar_circulo
@@ -936,27 +902,18 @@ main:
 
 
 
-
-
-
-
-
-
-
-
     //ESTREllAS
-    //Dibujamos La luna
+
+
 	mov x0, x20
-	mov x1, 400 //Eje x
-	mov x2, 150 //Eje y
-	mov x3, 3 //Tamano
+	mov x1, 400 
+	mov x2, 150 
+	mov x3, 3 
 
 	//Cargamos el color
 	movz x4, (DETALLES_AMARILLOS & 0x0000FFFF), lsl 0
 	movk x4, (DETALLES_AMARILLOS >> 16), lsl 16
 	bl dibujar_circulo
-
-
 
     mov x0, x20
 	mov x1, 450 
@@ -1005,7 +962,6 @@ main:
 	movk x4, (DETALLES_AMARILLOS >> 16), lsl 16
 	bl dibujar_circulo
 
-
     mov x0, x20
 	mov x1, 250 
 	mov x2, 110
@@ -1014,8 +970,6 @@ main:
 	movz x4, (ROSA & 0x0000FFFF), lsl 0
 	movk x4, (ROSA >> 16), lsl 16
 	bl dibujar_circulo
-
-
 
     mov x0, x20
 	mov x1, 450 
@@ -1026,7 +980,6 @@ main:
 	movk x4, (ROSA >> 16), lsl 16
 	bl dibujar_circulo
 
-
     mov x0, x20
 	mov x1, 350
 	mov x2, 60
@@ -1035,7 +988,6 @@ main:
 	movz x4, (ROSA & 0x0000FFFF), lsl 0
 	movk x4, (ROSA >> 16), lsl 16
 	bl dibujar_circulo
-
 
     mov x0, x20
 	mov x1, 390
@@ -1046,7 +998,6 @@ main:
 	movk x4, (DETALLES_AMARILLOS >> 16), lsl 16
 	bl dibujar_circulo
 
-
     mov x0, x20
 	mov x1, 600
 	mov x2, 200
@@ -1056,7 +1007,6 @@ main:
 	movk x4, (DETALLES_AMARILLOS >> 16), lsl 16
 	bl dibujar_circulo
 
-
     mov x0, x20
 	mov x1, 260
 	mov x2, 200
@@ -1065,7 +1015,6 @@ main:
 	movz x4, (DETALLES_AMARILLOS & 0x0000FFFF), lsl 0
 	movk x4, (DETALLES_AMARILLOS >> 16), lsl 16
 	bl dibujar_circulo
-
 
 
 InfLoop:
