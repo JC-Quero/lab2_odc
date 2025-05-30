@@ -19,6 +19,14 @@
 .equ SOMBRA_SUELO, 0xFF1A202C
 .equ ESTRUCTURAS_LEJANAS, 0xFF805AD5
 
+.equ FONDO_OSCURO, 0xFF0D1018
+
+
+
+//.equ FONDO_OSCURO, 0xFF483D8B
+
+
+
 //Argumentos x0 a x3
 //x0 = Direccion base del framebuffer (memoria de la pantalla)
 //x1 = Coordenada X del pixel a dibujar
@@ -202,7 +210,7 @@ main:
 
     mov x0, x20
     mov x1, 0      
-    mov x2, 406                 
+    mov x2, 410                 
     mov x3, SCREEN_WIDTH              
     mov x4, 70               
     movz x5, (SOMBRA_SUELO & 0x0000FFFF), lsl 0 
@@ -244,6 +252,107 @@ main:
     mov x4, 7               
     movz x5, (DETALLES_AMARILLOS & 0x0000FFFF), lsl 0 
     movk x5, (DETALLES_AMARILLOS >> 16), lsl 16
+    bl dibujar_rectangulo
+
+
+
+    //Edificios de Atras
+ 
+    mov x0, x20
+    mov x1, 0      
+    mov x2, 305                
+    mov x3, SCREEN_WIDTH              
+    mov x4, 108               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
+    bl dibujar_rectangulo
+
+
+    mov x0, x20
+    mov x1, 10      
+    mov x2, 295                
+    mov x3, 20              
+    mov x4, 108               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
+    bl dibujar_rectangulo
+
+    mov x0, x20
+    mov x1, 30      
+    mov x2, 250                
+    mov x3, 20              
+    mov x4, 108               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
+    bl dibujar_rectangulo
+
+
+    mov x0, x20
+    mov x1, 250      
+    mov x2, 270                
+    mov x3, 20              
+    mov x4, 108               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
+    bl dibujar_rectangulo
+
+    mov x0, x20
+    mov x1, 245      
+    mov x2, 260                
+    mov x3, 10              
+    mov x4, 108               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
+    bl dibujar_rectangulo
+
+
+    mov x0, x20
+    mov x1, 545      
+    mov x2, 260                
+    mov x3, 10              
+    mov x4, 108               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
+    bl dibujar_rectangulo
+
+
+    mov x0, x20
+    mov x1, 555      
+    mov x2, 240                
+    mov x3, 20              
+    mov x4, 108               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
+    bl dibujar_rectangulo
+
+
+    mov x0, x20
+    mov x1, 575      
+    mov x2, 260                
+    mov x3, 10              
+    mov x4, 108               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
+    bl dibujar_rectangulo
+
+
+    mov x0, x20
+    mov x1, 560      
+    mov x2, 220                
+    mov x3, 10              
+    mov x4, 108               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
+    bl dibujar_rectangulo
+
+
+    mov x0, x20
+    mov x1, 490      
+    mov x2, 270                
+    mov x3, 20              
+    mov x4, 40               
+    movz x5, (FONDO_OSCURO & 0x0000FFFF), lsl 0 
+    movk x5, (FONDO_OSCURO >> 16), lsl 16
     bl dibujar_rectangulo
 
 
